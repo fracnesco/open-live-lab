@@ -1,0 +1,14 @@
+# I dati della lavagna contengono il codice consegnato dagli studenti.
+# Senza questo file sarebbero scaricabili da chiunque indovini l'indirizzo.
+# Ci accede solo api/board.php, che sta sul filesystem e non passa da qui.
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+
+# Apache 2.2 (alcuni hosting condivisi sono ancora qui)
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>

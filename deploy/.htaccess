@@ -1,0 +1,78 @@
+# ══════════════════════════════════════════════════════════════════════════
+# Open Live Lab — configurazione Apache per francescocorvi.com/livelab
+#
+# ⚠ QUESTO FILE STA SOLO DENTRO livelab/. Un .htaccess vale per la cartella
+#   in cui si trova e per tutto ciò che contiene: nella radice del dominio
+#   sostituirebbe l'.htaccess del sito. Per questo build.sh mette tutto sotto
+#   livelab/ già dentro lo zip.
+#
+# ⚠ Una direttiva non supportata dal server restituisce 500 su tutto ciò che
+#   il file governa. Per questo ogni blocco è avvolto in <IfModule>: se il
+#   modulo non c'è, il blocco viene ignorato invece di rompere tutto.
+#
+#   Dopo il caricamento apri subito /livelab. Se compare un 500, cancella il
+#   file e rimetti un blocco per volta.
+#
+# ══════════════════════════════════════════════════════════════════════════
+
+# ── HTTPS obbligatorio ──────────────────────────────────────────────────
+# Senza secure context Strudel non parte: uno studente che digita l'indirizzo
+# senza «https» avrebbe un'app muta. Il redirect lo rimanda su https.
+# La seconda condizione evita il loop se il TLS è terminato a monte
+# (Cloudflare e simili): in quel caso HTTPS è «off» per Apache ma la
+# richiesta era già sicura.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Nessun elenco di file quando manca index.html.
+# (Se dopo il caricamento compare un 500, questa è la prima riga da togliere:
+# alcuni hosting non permettono «Options» negli .htaccess.)
+Options -Indexes
+
+# ── Tipi MIME ───────────────────────────────────────────────────────────
+# Se il server non riconosce .wav i campioni arrivano con il tipo sbagliato
+# e la batteria non suona.
+<IfModule mod_mime.c>
+  AddType audio/wav  .wav
+  AddType text/javascript  .js
+  AddType application/json .json
+</IfModule>
+
+# ── Cache ───────────────────────────────────────────────────────────────
+# Campioni e librerie non cambiano mai: si tengono un anno, così il secondo
+# studente che apre il link non riscarica 3 MB.
+# L'app invece cambia a ogni deploy e non va mai messa in cache, o gli
+# studenti si ritrovano una versione vecchia senza capire perché.
+<IfModule mod_headers.c>
+  # Nessun altro sito può incorporare Open Live Lab in un iframe facendolo passare
+  # per proprio: la pagina si apre solo direttamente.
+  Header set X-Frame-Options "SAMEORIGIN"
+
+  <FilesMatch "\.(wav|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # L'app cambia a ogni deploy: mai in cache, o gli studenti si ritrovano
+  # una versione vecchia senza capire perché. TUTTI i .js e .css, non un
+  # elenco: con l'elenco, ogni file nuovo (tutorials/*.js, snippets/*.js,
+  # score.js…) restava fuori e il browser lo teneva in cache a sua scelta.
+  <FilesMatch "\.(html|json|php|js|css)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  # Eccezione, e deve stare DOPO la regola generale (vince l'ultima): le
+  # librerie vendorizzate (1 MB) non cambiano, si tengono un mese. Sono
+  # elencate per nome: FilesMatch vede il nome del file, non la cartella,
+  # quindi non si può dire "vendor/".
+  <FilesMatch "^(hydra-synth|strudel-web|codemirror\.min|cm-[a-z]+\.min)\.(js|css)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+# ── Compressione ────────────────────────────────────────────────────────
+# I .wav sono già compressi: comprimerli di nuovo spreca CPU e basta.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json
+</IfModule>
