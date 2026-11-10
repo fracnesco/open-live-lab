@@ -1,0 +1,16 @@
+# Prodotti di build.sh: si rigenerano, non si versionano.
+dist/
+livelab.zip
+
+# La password del docente e i dati della lavagna non vanno sul repo:
+# secret.php si crea da api/secret.example.php.
+api/secret.php
+data/board.json.php
+data/.board.*.tmp
+
+# Note di lavoro locali.
+docs/
+CLAUDE.md
+.claude/
+
+.DS_Store

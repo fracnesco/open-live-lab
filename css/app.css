@@ -1,0 +1,1239 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Open Live Lab — layout e componenti dell'app
+   ════════════════════════════════════════════════════════════════════════ */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  height: 100%;
+  background: var(--void);
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  /* niente legature: in un font da codice «=>» diventerebbe una freccia, e
+     chi sta imparando deve vedere i caratteri che ha digitato davvero */
+  font-variant-ligatures: none;
+  overflow: hidden;
+}
+
+/* Opacità dei pannelli: la regola lo slider del menu ◐ TEMA (js/theme.js),
+   da 1 (pannelli come disegnati qui sotto) a 0 (restano testo e bordi,
+   e sotto si vede tutta la visuale). La usano solo i pannelli che stanno
+   sopra la visuale; barra in alto, menu e suggerimenti restano pieni, così
+   lo slider si ritrova sempre. */
+:root { --panel-alpha: 1; }
+
+/* ── Canvas Hydra a tutto schermo (dietro tutto) ─────────────────────── */
+#hydra-canvas {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  background: var(--void);
+}
+
+/* ── Topbar ──────────────────────────────────────────────────────────── */
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+#topbar-row {
+  display: flex; align-items: center; gap: var(--s2);
+  height: 52px;
+  padding: 0 var(--s2);
+}
+#brand { display: flex; align-items: baseline; gap: 10px; }
+#brand .title { font-size: 0.95rem; }
+#brand-sub {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--label);
+}
+#views { display: flex; gap: 6px; margin-left: var(--s3); }
+#topbar-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+/* Quindici bottoni non stanno in uno schermo da portatile (1280px) con la
+   spaziatura piena, e in spagnolo le parole sono più lunghe: sotto i 1500px
+   i bottoni della barra si stringono e il sottotitolo sparisce. Senza, gli
+   ultimi bottoni (◐ TEMA, 🌐 lingua) finivano fuori dallo schermo. */
+@media (max-width: 1500px) {
+  #brand-sub { display: none; }
+  #views { margin-left: var(--s1); }
+  #topbar .btn { padding: 0.4rem 0.55rem; letter-spacing: 0.08em; }
+}
+
+/* Link al sorgente (nella barra della console): presente per obbligo AGPL, discreto per non competere
+   con i comandi veri. */
+#source-link {
+  font-size: 11px; letter-spacing: .04em; text-decoration: none;
+  color: var(--ink-3); padding: 0 4px;
+  transition: color var(--dur) var(--ease);
+}
+#source-link:hover { color: var(--ink-2); }
+
+/* ── Menu dei temi (e delle lingue, che ne copia la forma) ───────────── */
+#theme-wrap, #lang-wrap { position: relative; }
+#theme-menu, #lang-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  z-index: 40;
+  min-width: 180px;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+}
+#theme-menu[hidden], #lang-menu[hidden] { display: none; }
+#lang-menu { min-width: 150px; }
+/* Ogni voce porta il suo data-theme, quindi DENTRO la voce valgono le
+   variabili di quel tema: campione di colori e carattere sono un'anteprima
+   vera, presa da theme.css, non una copia da tenere allineata a mano. */
+.theme-item, .lang-item {
+  display: flex; align-items: center; gap: 10px;
+  background: transparent; border: 0;
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  font-family: var(--font-mono); font-size: 0.68rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 7px 10px;
+  cursor: pointer; text-align: left;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.theme-item:hover, .theme-item:focus-visible,
+.lang-item:hover, .lang-item:focus-visible { background: var(--elev); color: var(--ink); outline: none; }
+.theme-item[aria-checked="true"], .lang-item[aria-checked="true"] { color: var(--accent); }
+.theme-item[aria-checked="true"]::after,
+.lang-item[aria-checked="true"]::after { content: '●'; margin-left: auto; font-size: 0.5rem; }
+/* la sigla della lingua, dove nel menu dei temi c'è il campione di colori */
+.lang-code { width: 22px; flex-shrink: 0; color: var(--label); }
+.theme-swatch {
+  width: 30px; height: 8px; flex-shrink: 0;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg,
+    var(--visual) 0 33.4%, var(--accent) 33.4% 66.7%, var(--sound) 66.7% 100%);
+}
+/* slider dell'opacità dei pannelli, in fondo al menu */
+.theme-alpha {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 4px; padding: 9px 10px 6px;
+  border-top: 1px solid var(--line);
+}
+.theme-alpha-h {
+  display: flex; justify-content: space-between; gap: 10px;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--label);
+}
+.theme-alpha-h output { color: var(--ink-2); letter-spacing: 0.04em; }
+.theme-alpha input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); cursor: pointer; }
+/* interruttore «evidenzia ciò che suona», sotto lo slider */
+.theme-check {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px 6px;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.theme-check:hover { color: var(--ink-2); }
+.theme-check input { margin: 0; accent-color: var(--accent); cursor: pointer; }
+
+/* ── Viste ───────────────────────────────────────────────────────────── */
+main {
+  position: fixed;
+  top: 55px; bottom: 34px; left: 0; right: 0;   /* 34px = barra console */
+  z-index: 10;
+  pointer-events: none;           /* lascia respirare il canvas… */
+}
+main > * { pointer-events: auto; }  /* …ma i pannelli restano interattivi */
+
+/* ── Vista LAB: due editor a sinistra ────────────────────────────────── */
+#view-lab { right: auto; width: min(560px, 46vw); }
+#editors {
+  display: flex; flex-direction: column; gap: var(--s1);
+  height: 100%;
+  padding: var(--s1);
+}
+.editor-card {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  background: color-mix(in srgb, var(--panel) calc(88% * var(--panel-alpha)), transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+#card-hydra   { border-top: 2px solid var(--visual); }
+#card-strudel { border-top: 2px solid var(--sound); }
+
+.editor-head {
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap;            /* con molti bottoni (docente: + LAVAGNA) vanno a capo i bottoni, non il titolo */
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.editor-title {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.editor-title em {
+  font-style: normal; color: var(--label);
+  letter-spacing: 0.1em; margin-left: 4px; font-size: 0.62rem;
+}
+.editor-spacer { flex: 1; }
+
+.engine-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; flex-shrink: 0;
+}
+.dot-hydra   { background: var(--visual); box-shadow: var(--glow-visual); }
+.dot-strudel { background: var(--sound);   box-shadow: var(--glow-sound); }
+
+.btn-mini { padding: 0.25rem 0.55rem; font-size: 0.62rem; }
+
+.editor-body { flex: 1; min-height: 0; }
+.editor-status {
+  font-family: var(--font-mono); font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  padding: 5px 10px;
+  border-top: 1px solid var(--line);
+  color: var(--label);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.editor-status.ok  { color: var(--ok); }
+.editor-status.err { color: var(--bad); }
+
+/* ── CodeMirror: pelle scura Open Live Lab ─────────────────────────────────── */
+.CodeMirror {
+  height: 100%;
+  background: transparent;
+  color: var(--code-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+}
+/* CodeMirror rimette «contextual» sulle righe: senza questa regola «=>»
+   torna a essere disegnato come una freccia sola (vedi html, body). */
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like { font-variant-ligatures: none; }
+.CodeMirror-gutters {
+  background: transparent;
+  border-right: 1px solid var(--line);
+}
+.CodeMirror-linenumber { color: var(--ghost); font-size: 10px; }
+.CodeMirror-cursor { border-left: 2px solid var(--accent); }
+.CodeMirror-selected { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.CodeMirror-focused .CodeMirror-selected { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.CodeMirror-matchingbracket {
+  color: var(--accent) !important;
+  text-decoration: none !important;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+/* Il codice colore dei linguaggi NON dipende dal tema: è uguale ovunque.
+   Commenti, stringhe, numeri, parole chiave hanno i colori di fabbrica di
+   CodeMirror (vendor/codemirror.min.css, regole «.cm-s-default .cm-…»), che
+   per specificità vincono su qualunque regola senza quel prefisso. Qui sta
+   solo quello che CodeMirror lascia neutro. */
+.cm-variable { color: var(--code-text); }
+.cm-property { color: var(--code-property); }
+.cm-comment  { font-style: italic; }
+.cm-operator { color: var(--code-operator); }
+/* Il pezzo di codice che sta suonando (js/highlight.js): colore del SUONO,
+   come il puntatore dello spartito. --hl arriva da un .color("…") nel
+   pattern, se lo studente l'ha scritto. Si disegna con outline e sfondo,
+   che non spostano il testo. */
+.CodeMirror .cm-playing {
+  outline: 1.5px solid var(--hl, var(--sound));
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--hl, var(--sound)) 22%, transparent);
+}
+
+/* ── Vista TIMELINE ──────────────────────────────────────────────────── */
+#view-timeline {
+  display: flex; flex-direction: column; gap: var(--s1);
+  padding: var(--s1);
+}
+#view-timeline[hidden] { display: none; }
+
+/* La timeline è un DOCK in basso, alto quanto le sue tracce: tutto lo spazio
+   sopra resta al visual, che è metà della performance. (Prima #tl-wrap aveva
+   flex:1 e un fondo nero al 90%: copriva lo schermo intero anche con due
+   tracce sole.) `margin-top:auto` sulla toolbar spinge il blocco in fondo. */
+#tl-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  margin-top: auto;
+  background: color-mix(in srgb, var(--panel) calc(78% * var(--panel-alpha)), transparent);
+  flex-shrink: 0;
+}
+#tl-time {
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
+  color: var(--accent); letter-spacing: 0.02em;
+  min-width: 120px;
+}
+#tl-zoom { width: 130px; }
+
+/* Con 8 tracce suono e le corsie degli inviluppi aperte le righe non ci
+   stanno più: il dock si ferma a 58vh e il canvas scorre in verticale
+   (la colonna dei nomi lo segue, vedi timeline.js). */
+#tl-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  max-height: 58vh;
+  background: color-mix(in srgb, var(--bg) calc(76% * var(--panel-alpha)), transparent);   /* il visual traspare, ma righello ed etichette restano leggibili anche su un visual chiaro */
+  overflow: hidden;
+}
+#tl-sidebar {
+  width: 128px; flex-shrink: 0;
+  border-right: 1px solid var(--line-2);
+  padding-top: var(--ruler-h, 26px);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#tl-side-scroll { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.tl-track-label {
+  height: var(--track-h, 64px);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 10px;
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+}
+.tl-track-x {
+  margin-left: auto;
+  padding: 1px 5px; font-size: 0.55rem;
+  opacity: 0.6;
+}
+.tl-track-x:hover { opacity: 1; }
+/* triangolo ▸/▾ delle corsie, come quello delle tracce di Ableton */
+.tl-fold {
+  margin: 0 -4px 0 -6px; padding: 0 2px;
+  background: none; border: 0;
+  color: var(--ink-3); font-size: 0.7rem; line-height: 1;
+  cursor: pointer;
+}
+.tl-fold:hover { color: var(--ink); }
+.tl-lane-label {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 10px 0 18px;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--ink-3);
+  background: color-mix(in srgb, var(--void) 22%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.lane-sym { font-size: 0.8rem; }
+.lane-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lane-val { margin-left: auto; color: var(--accent); font-variant-numeric: tabular-nums; }
+#tl-add-track { display: block; margin: 8px; }
+#tl-add-track[hidden] { display: none; }
+.tb-vcount { opacity: 0.65; font-weight: 400; font-size: 0.58rem; }
+#tl-scroll {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+#tl-canvas {
+  position: relative;
+  height: 100%;
+  min-width: 100%;
+}
+
+/* righello: resta in cima quando il canvas scorre in verticale */
+.tl-ruler {
+  position: sticky; top: 0;
+  width: 100%;
+  height: var(--ruler-h, 26px);
+  border-bottom: 1px solid var(--line-2);
+  cursor: pointer;
+  z-index: 3;
+}
+/* scorrendo, le prime righe passano sotto il righello: lì diventa pieno */
+.v-scrolled .tl-ruler { background: var(--bg); }
+.ruler-mark {
+  position: absolute; top: 10px; bottom: 0;
+  border-left: 1px solid var(--line-2);
+  pointer-events: none;
+}
+.ruler-mark.major { top: 2px; }
+.ruler-mark span {
+  position: absolute; top: -2px; left: 3px;
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--label);
+}
+
+/* righe traccia */
+.tl-track-row {
+  position: absolute; left: 0; right: 0;
+  border-bottom: 1px solid var(--grid);
+  min-width: 100%;
+}
+.tl-track-row.alt { background: color-mix(in srgb, var(--ink) 1.2%, transparent); }
+.tl-lane-row {
+  position: absolute; left: 0; right: 0;
+  min-width: 100%;
+  background: color-mix(in srgb, var(--void) 22%, transparent);
+  border-bottom: 1px solid var(--grid);
+}
+
+/* inviluppo: la corsia sotto una clip, con la linea a punti (--c = colore traccia) */
+.tl-env {
+  position: absolute;
+  overflow: hidden;
+  cursor: crosshair;
+  background: color-mix(in srgb, var(--c) 7%, transparent);
+  /* bordi come ombre interne: un bordo vero sposterebbe l'SVG di 1px
+     rispetto alle coordinate del mouse */
+  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--c) 45%, transparent),
+              inset -1px 0 0 color-mix(in srgb, var(--c) 20%, transparent);
+  user-select: none; -webkit-user-select: none;
+  z-index: 2;
+}
+.tl-env svg { display: block; pointer-events: none; }
+.env-area { fill: color-mix(in srgb, var(--c) 16%, transparent); }
+.env-line { fill: none; stroke: var(--c); stroke-width: 1.5; }
+.env-pt { fill: var(--bg); stroke: var(--c); stroke-width: 1.5; }
+.env-pt.hot { fill: var(--c); }
+.env-tag {
+  position: absolute; top: 2px; left: 5px;
+  font-family: var(--font-mono); font-size: 0.52rem;
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
+  white-space: nowrap; pointer-events: none;
+}
+.tl-env-tip {
+  position: absolute;
+  padding: 2px 6px;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--ink);
+  background: var(--elev);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  pointer-events: none; white-space: nowrap;
+  z-index: 6;
+}
+.tl-env-tip[hidden] { display: none; }
+
+/* clip */
+.t-block {
+  position: absolute;
+  border: 1px solid transparent;
+  cursor: grab;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 2;
+}
+.t-block:active { cursor: grabbing; }
+.t-block.selected {
+  outline: 1px solid var(--accent);
+  box-shadow: var(--glow-accent);
+}
+.t-block.playing-now {
+  outline: 1px solid var(--ok);
+  box-shadow: var(--glow-ok);
+}
+.tb-name {
+  font-family: var(--font-mono); font-size: 0.66rem; font-weight: 600;
+  color: var(--ink);
+  padding: 5px 8px 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tb-time {
+  font-family: var(--font-mono); font-size: 0.58rem;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.tb-code {
+  font-family: var(--font-mono); font-size: 0.55rem;
+  color: color-mix(in srgb, var(--ink) 35%, transparent);
+  padding: 2px 8px;
+  white-space: nowrap; overflow: hidden;
+}
+/* tracce basse (da 7 tracce in su): nome e tempo, senza la riga di codice */
+.tl-compact .tb-name { padding-top: 3px; }
+.tl-compact .tb-code { display: none; }
+#tl-canvas.alt-dup .t-block { cursor: copy; }
+.tb-resize-l, .tb-resize-r {
+  position: absolute; top: 0; bottom: 0; width: 10px;
+  cursor: ew-resize; z-index: 3;
+}
+.tb-resize-l { left: 0; }
+.tb-resize-r { right: 0; }
+
+/* playhead */
+#tl-playhead {
+  position: absolute; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--accent);
+  box-shadow: var(--glow-accent);
+  pointer-events: none;
+  z-index: 5;
+}
+#tl-playhead::before {
+  content: '';
+  position: absolute; top: 0; left: -4px;
+  border: 5px solid transparent;
+  border-top-color: var(--accent);
+}
+
+#tl-hint {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+}
+
+/* ── Vista LAVAGNA ───────────────────────────────────────────────────── */
+#view-board {
+  display: flex; flex-direction: column;
+  padding: var(--s1);
+}
+#view-board[hidden] { display: none; }
+
+#board-wrap {
+  display: flex; flex-direction: column; gap: var(--s1);
+  min-height: 0; flex: 1;
+}
+
+#board-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: color-mix(in srgb, var(--panel) calc(100% * var(--panel-alpha)), transparent); border: 1px solid var(--line);
+  padding: 8px 12px;
+}
+#board-name {
+  background: var(--card); border: 1px solid var(--line-2);
+  color: var(--ink); font: inherit; font-size: 12px;
+  padding: 4px 8px; width: 150px;
+  border-radius: var(--radius);
+}
+#board-name:focus { outline: none; border-color: var(--accent); }
+
+.board-notice {
+  margin: 0; padding: 8px 12px;
+  background: var(--card); border-left: 2px solid var(--accent);
+  color: var(--ink-2); font-size: 13px;
+}
+
+#board-cols {
+  display: flex; gap: var(--s1);
+  min-height: 0; flex: 1;
+}
+#board-main      { flex: 1 1 60%; min-width: 0; display: flex; flex-direction: column; }
+#board-inbox-wrap{ flex: 1 1 40%; min-width: 0; display: flex; flex-direction: column; }
+#board-inbox-wrap[hidden] { display: none; }
+
+.board-h {
+  margin: 0 0 6px; font-size: 11px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--label);
+}
+
+#board-list, #board-inbox {
+  flex: 1; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+  padding-right: 4px;
+}
+
+.board-empty {
+  margin: 0; padding: 16px; color: var(--ink-3); font-size: 13px;
+  background: color-mix(in srgb, var(--panel) calc(100% * var(--panel-alpha)), transparent); border: 1px dashed var(--line-2);
+}
+
+/* La striscia colorata a sinistra dice a colpo d'occhio se la scheda è
+   VISUALE o SUONO: stessa convenzione del resto dell'app. */
+.board-card {
+  background: color-mix(in srgb, var(--panel) calc(100% * var(--panel-alpha)), transparent); border: 1px solid var(--line);
+  border-left: 2px solid var(--line-2);
+}
+.board-card.is-visual { border-left-color: var(--visual); }
+.board-card.is-sound  { border-left-color: var(--sound); }
+
+.board-card-head {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 8px 10px 4px;
+}
+.board-tag {
+  font-size: 10px; letter-spacing: .1em; font-weight: 600;
+  color: var(--label);
+}
+.is-visual .board-tag { color: var(--visual); }
+.is-sound  .board-tag { color: var(--sound); }
+.board-title { font-size: 13px; color: var(--ink); flex: 1; min-width: 0; }
+.board-who   { font-size: 11px; color: var(--ink-3); }
+
+.board-code {
+  margin: 0; padding: 8px 10px;
+  background: color-mix(in srgb, var(--void) calc(100% * var(--panel-alpha)), transparent); color: var(--ink-2);
+  font-family: var(--font-mono); font-size: 0.72rem;
+  line-height: 1.45; white-space: pre; overflow-x: auto;
+  max-height: 190px; overflow-y: auto;
+}
+
+.board-actions {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 6px 10px 8px;
+}
+
+/* ── Drawer (esempi / assistente) ────────────────────────────────────── */
+.drawer {
+  position: fixed;
+  top: 55px; bottom: 34px; right: 0;
+  width: 400px; max-width: 92vw;
+  z-index: 25;
+  display: flex; flex-direction: column;
+  background: color-mix(in srgb, var(--panel) calc(94% * var(--panel-alpha)), transparent);
+  backdrop-filter: blur(calc(12px * var(--panel-alpha)));
+  -webkit-backdrop-filter: blur(calc(12px * var(--panel-alpha)));
+  border-left: 1px solid var(--line-2);
+}
+.drawer[hidden] { display: none; }
+.drawer-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.drawer-tabs {
+  display: flex; gap: 6px;
+  padding: 10px 12px 4px;
+  flex-shrink: 0;
+}
+
+/* esempi */
+#examples-list { flex: 1; overflow-y: auto; padding: 10px 12px; }
+.ex-cat {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--label);
+  margin: 14px 0 6px;
+}
+.ex-cat:first-child { margin-top: 2px; }
+.ex-item {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--card) calc(100% * var(--panel-alpha)), transparent);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease);
+}
+.ex-item:hover { border-color: var(--line-2); background: var(--elev); }
+.ex-title {
+  font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600;
+  color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+}
+.ex-desc {
+  font-size: 0.72rem; color: var(--ink-3);
+  margin-top: 3px; line-height: 1.45;
+}
+.ex-tags {
+  font-family: var(--font-mono); font-size: 0.56rem;
+  letter-spacing: 0.08em; color: var(--label);
+  margin-top: 4px;
+}
+.ex-actions { display: flex; gap: 6px; margin-top: 7px; }
+
+/* libreria suoni — i campioni sono SUONO: colore freddo, playhead in accento */
+.lib-count {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.06em; color: var(--label);
+}
+#library-tags, #examples-tags {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+/* le etichette prendono il colore del motore: SUONO freddo, VISUALE caldo */
+#examples-tags.is-visual { --tag-c: var(--visual); }
+.lib-tag {
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.lib-tag:hover:not(:disabled) { color: var(--tag-c, var(--sound)); border-color: var(--tag-c, var(--sound)); }
+.lib-tag.is-on {
+  color: var(--tag-c, var(--sound)); border-color: var(--tag-c, var(--sound));
+  background: color-mix(in srgb, var(--tag-c, var(--sound)) 14%, transparent);
+}
+.lib-tag:disabled { color: var(--ghost); border-color: var(--line); cursor: default; }
+.lib-tag-n { opacity: 0.6; margin-left: 2px; }
+.lib-tag-reset { border-style: dashed; }
+
+#library-list { flex: 1; overflow-y: auto; padding: 4px 12px 14px; }
+.lib-group { margin-top: 12px; }
+.lib-group-head {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px;
+  margin-bottom: 6px;
+}
+.lib-code {
+  font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600;
+  color: var(--sound);
+}
+.lib-desc { font-size: 0.72rem; color: var(--ink-3); flex: 1; min-width: 12em; }
+.lib-bank-tags {
+  font-family: var(--font-mono); font-size: 0.56rem;
+  letter-spacing: 0.08em; color: var(--label);
+}
+.lib-grid {
+  display: grid; gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+}
+/* La forma d'onda è lo sfondo del riquadro: compare al passaggio del mouse
+   senza spostare niente, e resta accesa mentre il suono va. */
+.lib-tile {
+  position: relative; overflow: hidden;
+  height: 58px; padding: 6px 8px;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: stretch;
+  background: color-mix(in srgb, var(--card) calc(100% * var(--panel-alpha)), transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-2); font: inherit; text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.lib-tile:hover, .lib-tile:focus-visible { border-color: var(--line-hover); outline: none; }
+.lib-tile.is-playing { border-color: var(--sound); box-shadow: var(--glow-sound); }
+.lib-wave {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  color: var(--sound);               /* il colore con cui library.js disegna */
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+  pointer-events: none;
+}
+.lib-tile:hover .lib-wave,
+.lib-tile:focus-visible .lib-wave,
+.lib-tile.is-playing .lib-wave { opacity: 0.5; }
+.lib-head {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 1px;
+  background: var(--accent); box-shadow: var(--glow-accent);
+  display: none; pointer-events: none;
+}
+.lib-tile.is-playing .lib-head { display: block; }
+.lib-name, .lib-meta { position: relative; text-shadow: 0 0 4px var(--card), 0 0 2px var(--card); }
+.lib-name {
+  font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600;
+  color: var(--ink);
+}
+.lib-tile.is-playing .lib-name { color: var(--sound); }
+.lib-meta {
+  display: flex; gap: 6px; align-items: baseline;
+  font-family: var(--font-mono); font-size: 0.56rem;
+  color: var(--label);
+}
+.lib-own { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-tile.is-loading .lib-dur::after { content: '…'; }
+.lib-tile.is-broken { cursor: default; }
+.lib-tile.is-broken .lib-dur { color: var(--bad); }
+
+/* assistente */
+#ai-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bad); box-shadow: 0 0 8px color-mix(in srgb, var(--bad) 50%, transparent);
+  flex-shrink: 0;
+}
+#ai-status-dot.online { background: var(--ok); box-shadow: var(--glow-ok); }
+#ai-model { max-width: 150px; font-size: 0.66rem; padding: 0.25rem 0.4rem; }
+#ai-messages {
+  flex: 1; overflow-y: auto;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ai-msg { font-size: 0.8rem; line-height: 1.55; }
+.ai-msg.user {
+  align-self: flex-end;
+  max-width: 88%;
+  background: var(--elev);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  color: var(--ink);
+}
+.ai-msg.bot { align-self: stretch; color: var(--ink-2); }
+.ai-msg.bot p { margin: 0 0 8px; }
+.ai-msg.bot .ai-code {
+  background: var(--void);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  margin: 6px 0 10px;
+}
+.ai-code pre {
+  margin: 0; padding: 8px 10px;
+  font-family: var(--font-mono); font-size: 0.7rem;
+  line-height: 1.5; color: var(--ink);
+  overflow-x: auto;
+  white-space: pre;
+}
+.ai-code-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  border-top: 1px solid var(--line);
+}
+.ai-code-bar .label-txt { font-size: 0.55rem; }
+.ai-thinking {
+  font-family: var(--font-mono); font-size: 0.66rem;
+  color: var(--label); letter-spacing: 0.1em;
+}
+.ai-verify {
+  font-family: var(--font-mono); font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: var(--label);
+}
+.ai-verify.ok  { color: var(--ok); }
+.ai-verify.err { color: var(--bad); }
+.ai-fixnote {
+  font-family: var(--font-mono); font-size: 0.66rem;
+  color: var(--warn);
+  border-left: 2px solid var(--warn);
+  padding-left: 8px;
+}
+#ai-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ai-chip {
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.ai-chip:hover { color: var(--accent); border-color: var(--accent); }
+#ai-inputrow {
+  display: flex; gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+#ai-input { flex: 1; resize: none; font-size: 0.76rem; line-height: 1.4; }
+
+/* ── Console errori ──────────────────────────────────────────────────── */
+/* a console aperta le viste e i drawer si accorciano (224px = 34 + 190) */
+body.console-open main,
+body.console-open .drawer { bottom: 224px; }
+
+#console-panel {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 22;
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line-2);
+  display: flex; flex-direction: column;
+}
+#console-bar {
+  height: 34px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#console-badge {
+  font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600;
+  color: var(--void);
+  background: var(--bad);
+  border-radius: 8px;
+  padding: 1px 7px;
+}
+.c-last {
+  font-family: var(--font-mono); font-size: 0.66rem;
+  color: var(--label);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.c-last.err  { color: var(--bad); }
+.c-last.warn { color: var(--warn); }
+.c-last.ok   { color: var(--ok); }
+#console-rows {
+  display: none;
+  overflow-y: auto;
+  padding: 4px 12px 10px;
+  border-top: 1px solid var(--line);
+}
+#console-panel.open #console-rows { display: block; height: 190px; }
+#console-panel.open #console-close { transform: rotate(180deg); }
+.c-row {
+  border-left: 2px solid var(--line-2);
+  padding: 5px 10px;
+  margin: 6px 0;
+  font-family: var(--font-mono);
+}
+.c-row.err  { border-left-color: var(--bad); }
+.c-row.warn { border-left-color: var(--warn); }
+.c-row.ok   { border-left-color: var(--ok); }
+.c-row.info { border-left-color: var(--sound); }
+.c-head { display: flex; gap: 10px; align-items: baseline; }
+.c-time { font-size: 0.58rem; color: var(--ghost); }
+.c-src {
+  font-size: 0.56rem; letter-spacing: 0.16em;
+  color: var(--label);
+}
+.c-count {
+  font-size: 0.58rem; font-weight: 600;
+  color: var(--accent);
+}
+.c-ask {
+  margin-left: auto;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.56rem;
+}
+.c-row.err .c-ask:hover  { color: var(--bad); border-color: var(--bad); }
+.c-row.warn .c-ask:hover { color: var(--warn); border-color: var(--warn); }
+.c-msg { font-size: 0.7rem; color: var(--ink-2); margin-top: 1px; word-break: break-word; }
+.c-row.err .c-msg { color: color-mix(in srgb, var(--bad) 50%, var(--ink)); }
+.c-hint {
+  font-size: 0.7rem; color: var(--accent);
+  margin-top: 3px;
+  font-family: var(--font-ui);
+  line-height: 1.5;
+  max-width: 72em;
+}
+
+/* ── Modalità aiuto ──────────────────────────────────────────────────── */
+body.help-mode, body.help-mode * { cursor: help !important; }
+.help-hover {
+  outline: 1px solid var(--accent) !important;
+  outline-offset: 2px;
+  box-shadow: var(--glow-accent) !important;
+}
+#help-tip {
+  position: fixed;
+  z-index: 100;
+  max-width: 330px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--glow-accent);
+  padding: 10px 12px;
+  pointer-events: none;
+}
+#help-tip[hidden] { display: none; }
+#help-tip-title {
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+#help-tip-body { font-size: 0.76rem; line-height: 1.5; color: var(--ink-2); }
+/* tooltip su una funzione selezionata nel codice: firma in minuscolo */
+#help-tip.func #help-tip-title { text-transform: none; letter-spacing: 0.04em; font-size: 0.74rem; }
+#help-banner {
+  position: fixed;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--glow-accent);
+  color: var(--accent);
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 7px 16px;
+  white-space: nowrap;
+}
+#help-banner[hidden] { display: none; }
+
+/* ── Modale clip ─────────────────────────────────────────────────────── */
+#clip-modal-back {
+  position: fixed; inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--void) 65%, transparent);
+  display: flex; align-items: center; justify-content: center;
+}
+#clip-modal-back[hidden] { display: none; }
+#clip-modal {
+  width: min(680px, 92vw);
+  height: min(620px, 88vh);
+  display: flex; flex-direction: column;
+}
+#clip-modal-label { margin: 10px 12px 0; flex-shrink: 0; }
+#clip-variants-row {
+  display: flex; align-items: center; gap: 6px;
+  margin: 10px 12px 0; flex-shrink: 0;
+}
+#clip-variant-tabs { display: flex; gap: 4px; }
+.variant-tab { min-width: 26px; }
+#clip-variant-mode { font-size: 0.66rem; padding: 0.25rem 0.4rem; }
+#clip-variant-mode[hidden] { display: none; }
+#clip-variant-del[hidden] { display: none; }
+#cm-clip {
+  flex: 1; min-height: 80px;
+  margin: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--void);
+  overflow: hidden;
+}
+#cm-clip .CodeMirror { height: 100%; }
+#clip-vars { margin: 0 12px 10px; flex-shrink: 0; }
+#clip-vars-head { display: flex; align-items: center; gap: 8px; }
+#clip-vars-hint { text-transform: none; letter-spacing: 0.04em; color: var(--label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#clip-vars-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 118px; overflow-y: auto; }
+.clip-var-row { display: flex; align-items: center; gap: 6px; }
+.clip-var-sym { color: var(--accent); font-size: 0.9rem; }
+.clip-var-row .field { font-family: var(--font-mono); font-size: 0.7rem; padding: 0.22rem 0.4rem; }
+.clip-var-row .var-name { width: 130px; }
+.clip-var-row .var-num { width: 72px; }
+.clip-var-row .field.bad { border-color: var(--bad); }
+.clip-var-row .var-ins { margin-left: auto; }
+#clip-vars-err {
+  margin-top: 6px;
+  font-size: 0.72rem; color: var(--bad);
+}
+#clip-vars-err[hidden] { display: none; }
+.modal-btnrow { flex-shrink: 0; }
+.modal-btnrow {
+  display: flex; gap: 8px; align-items: center;
+  padding: 0 12px 12px;
+}
+
+/* ── Piccoli schermi ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  #view-lab { width: 100vw; }
+  #brand-sub { display: none; }
+}
+
+/* ── Spartito ────────────────────────────────────────────────────────── */
+.drawer-wide { width: 640px; }
+.score-bars {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--label);
+}
+.score-bars select {
+  background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--line-2); border-radius: var(--radius);
+  font-family: var(--font-mono); font-size: 0.68rem; padding: 2px 4px;
+}
+#score-body { flex: 1; overflow-y: auto; padding: 12px 14px 18px; }
+/* abcjs disegna con currentColor (vedi scoreview.js): così lo spartito
+   segue il tema anche se lo si cambia a spartito già disegnato. */
+#score-paper { min-height: 40px; color: var(--ink-2); }
+#score-paper svg { display: block; }
+.score-msg {
+  font-size: 0.8rem; line-height: 1.5; color: var(--ink-3);
+  padding: 8px 10px; margin-bottom: 10px;
+  border-left: 2px solid var(--line-2);
+}
+.score-msg.err  { color: var(--bad);  border-left-color: var(--bad); }
+.score-msg.warn { color: var(--warn); border-left-color: var(--warn); }
+.score-warn p { font-size: 0.74rem; line-height: 1.45; color: var(--warn); margin: 8px 0 0; }
+.score-legend {
+  margin-top: 12px;
+  font-family: var(--font-mono); font-size: 0.64rem;
+  letter-spacing: 0.08em; color: var(--ink-3);
+}
+#score-abc-wrap { margin-top: 16px; }
+#score-abc-wrap summary {
+  cursor: pointer;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--label);
+}
+#score-abc {
+  margin-top: 8px; padding: 10px; overflow-x: auto;
+  background: var(--card); border: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.5; color: var(--sound);
+  white-space: pre;
+}
+
+/* puntatore dello spartito */
+.score-cursor { stroke: var(--sound); stroke-width: 2; pointer-events: none; }
+.score-cursor-glow { fill: var(--sound); opacity: 0.14; pointer-events: none; }
+#score-paper .score-now, #score-paper .score-now path { fill: var(--sound) !important; stroke: var(--sound) !important; }
+.score-sync {
+  margin-top: 6px; min-height: 1.2em;
+  font-family: var(--font-mono); font-size: 0.64rem;
+  letter-spacing: 0.08em; color: var(--sound);
+}
+
+/* ── Vista TUTORIAL ──────────────────────────────────────────────────── */
+/* Pannello a sinistra come il LAB, un po' più largo perché si legge: a
+   destra resta scoperto lo sfondo, dove compaiono le visuali dei passi. */
+#view-tutorial { right: auto; width: min(980px, 72vw); padding: var(--s1); }
+#view-tutorial[hidden] { display: none; }
+/* Con un pannello laterale aperto (spartito, esempi, suoni, assistente) il
+   tutorial si stringe invece di finirci sotto: altrimenti il pannello copre
+   il testo e i bottoni dei riquadri. */
+body:has(.drawer:not([hidden])) #view-tutorial { width: min(980px, calc(100vw - 400px)); }
+body:has(.drawer-wide:not([hidden])) #view-tutorial { width: min(980px, calc(100vw - 640px)); }
+#tut-wrap {
+  display: flex; gap: var(--s1);
+  height: 100%;
+}
+
+#tut-index {
+  width: 210px; flex-shrink: 0;
+  overflow-y: auto;
+  padding: 10px;
+  background: color-mix(in srgb, var(--panel) calc(92% * var(--panel-alpha)), transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.tut-index-h {
+  font-family: var(--font-mono); font-size: 0.66rem;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ink-2);
+  padding-bottom: 8px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.tut-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%;
+  margin-bottom: 4px; padding: 7px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  font-family: var(--font-ui); font-size: 0.8rem;
+  text-align: left; cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.tut-item:hover { background: var(--elev); }
+.tut-item.is-on { background: var(--card); border-color: var(--line-2); color: var(--ink); }
+.tut-item-title { flex: 1; min-width: 0; }
+.tut-item-count {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  color: var(--label);
+}
+.dot-mix {
+  background: linear-gradient(90deg, var(--visual) 50%, var(--sound) 50%);
+}
+
+#tut-main {
+  flex: 1; min-width: 0;
+  overflow-y: auto;
+  padding: 18px 26px 40px;
+  background: color-mix(in srgb, var(--panel) calc(94% * var(--panel-alpha)), transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.tut-empty { color: var(--ink-3); }
+
+.tut-head { padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.tut-title {
+  margin: 4px 0 6px;
+  font-family: var(--font-display, var(--font-ui));
+  font-size: 1.6rem; font-weight: 700; color: var(--ink);
+}
+.tut-desc { margin: 0 0 12px; font-size: 0.9rem; line-height: 1.6; color: var(--ink-3); }
+.tut-progress { display: flex; align-items: center; gap: 10px; }
+.tut-progress-bar {
+  flex: 1; max-width: 260px; height: 4px;
+  background: var(--line); border-radius: 2px; overflow: hidden;
+}
+.tut-progress-fill {
+  height: 100%; width: 0;
+  background: var(--ok);
+  transition: width 0.4s var(--ease);
+}
+.tut-progress-txt {
+  font-family: var(--font-mono); font-size: 0.64rem;
+  letter-spacing: 0.06em; color: var(--label);
+}
+
+.tut-step { padding: 18px 0 10px; border-bottom: 1px solid var(--line); }
+.tut-step:last-of-type { border-bottom: 0; }
+.tut-step-h {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 8px;
+  font-size: 1.02rem; font-weight: 600; color: var(--ink);
+}
+.tut-step-n {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0;
+  border: 1px solid var(--line-2); border-radius: 50%;
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600;
+  color: var(--ink-3);
+}
+.tut-step.is-done .tut-step-n {
+  border-color: var(--ok); color: var(--ok);
+  font-size: 0;                              /* il numero lascia il posto al ✓ */
+}
+.tut-step.is-done .tut-step-n::after { content: '✓'; font-size: 0.72rem; }
+
+.tut-p {
+  margin: 0 0 10px; max-width: 68ch;
+  font-size: 0.9rem; line-height: 1.65; color: var(--ink-2);
+}
+.tut-p code, .tut-try code, .tut-desc code {
+  font-family: var(--font-mono); font-size: 0.82em;
+  padding: 1px 5px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--code-text);
+}
+.tut-p strong { color: var(--ink); }
+
+/* riquadro di codice: stessa convenzione di colore del resto dell'app */
+.tut-code {
+  margin: 12px 0;
+  background: color-mix(in srgb, var(--void) calc(100% * var(--panel-alpha)), transparent);
+  border: 1px solid var(--line-2);
+  border-top: 2px solid var(--line-2);
+  border-radius: var(--radius);
+  transition: box-shadow var(--dur) var(--ease);
+}
+.tut-code.is-sound  { border-top-color: var(--sound); }
+.tut-code.is-visual { border-top-color: var(--visual); }
+.tut-code.is-sound.is-playing  { box-shadow: var(--glow-sound); }
+.tut-code.is-visual.is-playing { box-shadow: var(--glow-visual); }
+.tut-code-head {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.tut-code-label {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.2em; color: var(--label);
+}
+.tut-code-body .CodeMirror { height: auto; padding: 4px 0; }
+
+.tut-try {
+  margin: 4px 0 10px; max-width: 68ch;
+  padding: 8px 12px;
+  border-left: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  font-size: 0.84rem; line-height: 1.6; color: var(--ink-2);
+}
+.tut-try-h {
+  display: block;
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 2px;
+}
+
+.tut-foot {
+  display: flex; align-items: center; gap: 10px;
+  padding-top: 18px; margin-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+  #view-tutorial { width: 100vw; }
+  #tut-wrap { flex-direction: column; }
+  #tut-index { width: auto; max-height: 30%; }
+  #tut-main { padding: 14px 16px 30px; }
+}

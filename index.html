@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Live Lab — Laboratorio di Live Coding</title>
+<!--
+  Open Live Lab — Copyright (c) 2026 Francesco Corvi
+  Licenza: GNU AGPL-3.0-or-later (vedi LICENSE nel repository).
+  Sorgente: https://github.com/fracnesco/open-live-lab
+  Costruito su Strudel (AGPL) e hydra-synth (AGPL): chi copia o modifica
+  quest'app deve conservare questa nota e pubblicare il proprio sorgente.
+-->
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="vendor/codemirror.min.css">
+<link rel="stylesheet" href="css/app.css">
+<!-- Nell'head apposta: i18n.js sceglie la lingua e carica il suo pacchetto
+     prima di tutto il resto; theme.js sceglie il tema prima che la pagina
+     venga disegnata. -->
+<script src="js/i18n.js"></script>
+<script src="js/theme.js"></script>
+</head>
+<body>
+
+<!-- ── Canvas Hydra: sfondo a tutto schermo ─────────────────────────────── -->
+<canvas id="hydra-canvas"></canvas>
+
+<!-- ── Barra superiore ──────────────────────────────────────────────────── -->
+<header id="topbar">
+  <div class="spectrum"></div>
+  <div id="topbar-row">
+    <div id="brand" data-help="Open Live Lab|Laboratorio di live coding: crea visuali con Hydra e musica con Strudel, scrivendo codice dal vivo.">
+      <span class="title">Open Live Lab</span>
+      <span id="brand-sub">live coding · didattica</span>
+    </div>
+
+    <nav id="views" data-help="Viste|Passa dai TUTORIAL (per imparare passo passo) al LAB (dove scrivi ed esegui il codice) alla TIMELINE (dove organizzi i codici nel tempo) alla LAVAGNA (dove la classe si scambia il codice).">
+      <button id="view-tut-btn" class="btn view-btn" data-view="tutorial"
+        data-help="Vista TUTORIAL|Percorsi passo passo: ogni passo spiega un'idea e ha un riquadro di codice da eseguire e modificare sul posto. Da lì il codice si porta nel LAB o nella timeline.">TUTORIAL</button>
+      <button id="view-lab-btn" class="btn view-btn active-accent" data-view="lab"
+        data-help="Vista LAB|La sala prove: due editor di codice, uno per le visuali e uno per il suono. Scrivi e premi ESEGUI.">LAB</button>
+      <button id="view-tl-btn" class="btn view-btn" data-view="timeline"
+        data-help="Vista TIMELINE|Il palcoscenico: disponi i tuoi codici su due tracce nel tempo e premi PLAY per la performance completa.">TIMELINE</button>
+      <button id="view-board-btn" class="btn view-btn" data-view="board"
+        data-help="Vista LAVAGNA|La bacheca della classe: qui compaiono gli esempi appesi da chi tiene il laboratorio, e da qui puoi mandargli i tuoi.">LAVAGNA</button>
+    </nav>
+
+    <div id="topbar-right">
+      <button id="mic-btn" class="btn"
+        data-help="Microfono|Accendendolo, le visuali possono reagire al suono: nel codice Hydra usi a.fft[0] (bassi), a.fft[1], a.fft[2], a.fft[3] (acuti). Il browser ti chiederà il permesso. Il suono resta su questo computer: non viene registrato né inviato.">🎤 MIC</button>
+      <button id="score-btn" class="btn"
+        data-help="Spartito|Mostra il pattern SUONO (dell'editor, o del riquadro del tutorial che hai appena fatto partire) come uno spartito in notazione tradizionale: ogni ciclo di Strudel diventa una battuta in 4/4. Non fa partire né cambia la musica: serve a leggere il ritmo e le note.">♪ SPARTITO</button>
+      <button id="examples-btn" class="btn"
+        data-help="Esempi|Apre la libreria di esempi pronti: cliccane uno per caricarlo nell'editor e capire come funziona.">ESEMPI</button>
+      <button id="library-btn" class="btn"
+        data-help="Suoni|Apre la libreria di tutti i suoni che puoi usare con s(&quot;…&quot;): i campioni registrati e, in fondo, i sintetizzatori e i rumori. Passa sopra a un suono per vederne la forma d'onda, cliccalo per ascoltarlo. Le etichette in alto aiutano a trovare quello che cerchi.">♫ SUONI</button>
+      <button id="ai-btn" class="btn"
+        data-help="Assistente AI|Apre l'assistente basato su Ollama: chiedigli di creare esempi di codice o di spiegarti quello che hai scritto. Gira tutto sul tuo computer.">ASSISTENTE</button>
+      <button id="help-btn" class="btn"
+        data-help="Modalità aiuto|È questa! Quando è attiva, passa il mouse su qualsiasi elemento per una spiegazione, oppure seleziona una funzione nel codice per scoprire cosa fa. Premi ESC o riclicca per uscire.">? AIUTO</button>
+      <!-- Menu dei temi: le voci le scrive js/theme.js dal suo elenco. -->
+      <div id="theme-wrap"
+        data-help="Tema|Cambia i colori e i caratteri dell'interfaccia: apri il menu e scegli un tema. In fondo al menu, lo slider OPACITÀ PANNELLI rende i pannelli trasparenti per vedere la visuale sotto. Le scelte vengono ricordate su questo computer. Il codice e la musica non cambiano.">
+        <button id="theme-btn" class="btn" aria-haspopup="menu" aria-expanded="false">◐ TEMA ▾</button>
+        <div id="theme-menu" role="menu" hidden></div>
+      </div>
+      <!-- Menu delle lingue: bottone e voci li scrive js/i18n.js. -->
+      <div id="lang-wrap"
+        data-help="Lingua|Cambia la lingua dell'app: italiano, inglese o spagnolo. Si traducono l'interfaccia, i tutorial, gli esempi e i commenti nel loro codice. La pagina si ricarica: il codice negli editor e la timeline restano. La scelta viene ricordata su questo computer.">
+        <button id="lang-btn" class="btn" aria-haspopup="menu" aria-expanded="false">🌐 IT ▾</button>
+        <div id="lang-menu" role="menu" hidden></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ VISTA LAB ═════════════════════════════════════════════════════════ -->
+<main id="view-lab">
+  <div id="editors">
+
+    <!-- Editor VISUALE (Hydra) -->
+    <section class="editor-card" id="card-hydra"
+      data-help="Editor VISUALE|Qui scrivi il codice Hydra che genera le immagini. Il risultato appare sullo sfondo, dietro i pannelli. Suggerimento: seleziona il nome di una funzione (es. osc, kaleid) per farti spiegare cosa fa.">
+      <div class="editor-head">
+        <span class="engine-dot dot-hydra"></span>
+        <span class="editor-title">VISUALE <em>hydra</em></span>
+        <span class="editor-spacer"></span>
+        <button class="btn btn-mini" id="run-hydra"
+          data-help="Esegui visuale|Fa partire il codice Hydra scritto qui sotto. Scorciatoia: Cmd+Invio dentro l'editor.">▶ ESEGUI</button>
+        <button class="btn btn-mini" id="stop-hydra"
+          data-help="Ferma visuale|Ferma le immagini e riporta lo sfondo al nero.">■ STOP</button>
+        <button class="btn btn-mini" id="save-hydra"
+          data-help="Salva negli esempi|Salva questo codice nella libreria ESEMPI, nella sezione 'I tuoi esempi': lo ritroverai anche alle prossime sessioni.">★ SALVA</button>
+        <button class="btn btn-mini board-only" id="board-add-hydra" hidden
+          data-help="Appendi alla lavagna|Mette questo codice sulla lavagna della classe: lo vedranno tutti gli studenti.">→ LAVAGNA</button>
+        <button class="btn btn-mini" id="tl-add-hydra"
+          data-help="Aggiungi alla timeline|Salva questo codice come clip sulla traccia VISUALE della timeline, per usarlo nella performance.">+ TIMELINE</button>
+      </div>
+      <div class="editor-body" id="cm-hydra"></div>
+      <div class="editor-status" id="status-hydra"
+        data-help="Stato visuale|Qui compaiono i messaggi: verde se il codice funziona, rosso se c'è un errore (con la spiegazione).">pronto</div>
+    </section>
+
+    <!-- Editor SUONO (Strudel) -->
+    <section class="editor-card" id="card-strudel"
+      data-help="Editor SUONO|Qui scrivi i pattern Strudel che generano la musica: note, ritmi e suoni si scrivono come piccole frasi di testo. Suggerimento: seleziona il nome di una funzione (es. sound, fast) o di un suono (es. bd) per farti spiegare cosa fa.">
+      <div class="editor-head">
+        <span class="engine-dot dot-strudel"></span>
+        <span class="editor-title">SUONO <em>strudel</em></span>
+        <span class="editor-spacer"></span>
+        <button class="btn btn-mini" id="run-strudel"
+          data-help="Esegui suono|Fa partire il pattern musicale scritto qui sotto. Scorciatoia: Cmd+Invio dentro l'editor.">▶ ESEGUI</button>
+        <button class="btn btn-mini" id="stop-strudel"
+          data-help="Ferma suono|Ferma la musica (in Strudel si chiama 'hush', cioè 'silenzio').">■ STOP</button>
+        <button class="btn btn-mini" id="save-strudel"
+          data-help="Salva negli esempi|Salva questo pattern nella libreria ESEMPI, nella sezione 'I tuoi esempi': lo ritroverai anche alle prossime sessioni.">★ SALVA</button>
+        <button class="btn btn-mini board-only" id="board-add-strudel" hidden
+          data-help="Appendi alla lavagna|Mette questo codice sulla lavagna della classe: lo vedranno tutti gli studenti.">→ LAVAGNA</button>
+        <button class="btn btn-mini" id="tl-add-strudel"
+          data-help="Aggiungi alla timeline|Salva questo pattern come clip sulla traccia SUONO della timeline, per usarlo nella performance.">+ TIMELINE</button>
+      </div>
+      <div class="editor-body" id="cm-strudel"></div>
+      <div class="editor-status" id="status-strudel"
+        data-help="Stato suono|Qui compaiono i messaggi: verde se il pattern suona, rosso se c'è un errore (con la spiegazione).">pronto</div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ══ VISTA TIMELINE ════════════════════════════════════════════════════ -->
+<main id="view-timeline" hidden>
+  <div id="tl-toolbar" class="card">
+    <button id="tl-play" class="btn"
+      data-help="Play|Fa partire la performance: ogni clip esegue il suo codice quando la linea del tempo la raggiunge. Scorciatoia: barra spaziatrice.">▶ PLAY</button>
+    <button id="tl-stop" class="btn"
+      data-help="Stop|Ferma la performance e riporta la linea del tempo all'inizio.">■ STOP</button>
+    <button id="tl-loop" class="btn"
+      data-help="Loop|Quando è acceso, arrivata alla fine la performance ricomincia da capo, all'infinito.">⟲ LOOP</button>
+    <span id="tl-time" data-help="Tempo|Il punto esatto in cui si trova la performance: secondi trascorsi / durata totale.">0.0s / 0.0s</span>
+    <span class="editor-spacer"></span>
+    <span class="label-txt">zoom</span>
+    <input type="range" id="tl-zoom" class="slider" min="4" max="80" step="1" value="14"
+      data-help="Zoom|Allarga o restringe la timeline: utile per lavorare con precisione o vedere tutta la performance. Puoi anche usare la rotellina del mouse sulla timeline.">
+    <button id="tl-export" class="btn btn-mini"
+      data-help="Esporta|Scarica la performance come file .json: puoi portarla su un altro computer o conservarla.">⬇ SALVA</button>
+    <button id="tl-import" class="btn btn-mini"
+      data-help="Importa|Carica una performance salvata in precedenza da un file .json.">⬆ APRI</button>
+    <input type="file" id="tl-import-file" accept=".json,application/json" hidden>
+  </div>
+
+  <div id="tl-wrap" class="card">
+    <div id="tl-sidebar">
+      <div id="tl-side-scroll">
+        <div id="tl-track-labels"></div>
+        <button id="tl-add-track" class="btn btn-mini"
+          data-help="Nuova traccia suono|Aggiunge un'altra traccia SUONO (fino a 8). I pattern delle tracce suonano insieme e restano sempre a tempo tra loro: condividono lo stesso orologio musicale.">+ SUONO</button>
+      </div>
+    </div>
+    <div id="tl-scroll"
+      data-help="Timeline|Il tempo scorre da sinistra a destra. Trascina le clip per spostarle (Alt+trascina per duplicarle), tira i bordi per allungarle, doppio clic per modificarne il codice, doppio clic su uno spazio vuoto per creare una clip nuova. Cmd+C / Cmd+V copiano e incollano la clip selezionata alla linea del tempo.">
+      <div id="tl-canvas"></div>
+    </div>
+  </div>
+
+  <div id="tl-hint" class="label-txt">
+    doppio clic su una traccia = nuova clip · doppio clic su una clip = codice, varianti 🎲 e variabili ∿ · trascina = sposta (anche su/giù tra tracce suono) · alt+trascina = duplica · cmd+C / cmd+V = copia e incolla · bordi = allunga/accorcia · clic sul righello = sposta la linea del tempo · ∿ inviluppo: clic = nuovo punto, clic su un punto = cancella
+  </div>
+</main>
+
+<!-- ══ VISTA LAVAGNA ═════════════════════════════════════════════════════ -->
+<main id="view-board" hidden>
+  <div id="board-wrap">
+
+    <div id="board-bar"
+      data-help="Lavagna|Il posto dove chi tiene il laboratorio appende esempi di codice per tutti, e dove tu puoi mandargli i tuoi.">
+      <span class="label-txt">lavagna della classe</span>
+      <span class="editor-spacer"></span>
+      <label for="board-name" class="label-txt">il tuo nome</label>
+      <input id="board-name" type="text" maxlength="40" placeholder="come ti chiami"
+        data-help="Il tuo nome|Serve solo perché chi riceve il tuo esempio sappia di chi è. Resta su questo computer.">
+      <button id="board-send-hydra" class="btn btn-mini"
+        data-help="Invia la visuale|Manda il codice del tuo editor VISUALE a chi tiene il laboratorio.">INVIA VISUALE</button>
+      <button id="board-send-strudel" class="btn btn-mini"
+        data-help="Invia il suono|Manda il codice del tuo editor SUONO a chi tiene il laboratorio.">INVIA SUONO</button>
+    </div>
+
+    <p id="board-notice" class="board-notice" hidden></p>
+
+    <div id="board-cols">
+      <section id="board-main">
+        <h2 class="board-h">schede</h2>
+        <div id="board-list"></div>
+      </section>
+
+      <section id="board-inbox-wrap" hidden>
+        <h2 class="board-h">ricevuti</h2>
+        <div id="board-inbox"></div>
+      </section>
+    </div>
+
+  </div>
+</main>
+
+<!-- ══ VISTA TUTORIAL ════════════════════════════════════════════════════ -->
+<!-- Indice e tutorial aperto li scrive js/tutorial.js dai dati di
+     js/tutorials.js. Il pannello sta a sinistra: a destra resta lo sfondo,
+     dove compaiono le visuali dei passi Hydra. -->
+<main id="view-tutorial" hidden>
+  <div id="tut-wrap">
+    <nav id="tut-index"
+      data-help="Elenco dei tutorial|Scegli un percorso. Il numero a destra dice quanti passi hai già provato; ✓ vuol dire completato."></nav>
+    <article id="tut-main"></article>
+  </div>
+</main>
+
+<!-- ── Drawer ESEMPI ────────────────────────────────────────────────────── -->
+<!-- ══ DRAWER SPARTITO ═══════════════════════════════════════════════════ -->
+<aside id="score-drawer" class="drawer drawer-wide" hidden>
+  <div class="drawer-head">
+    <span class="label-txt" id="score-source"
+      data-help="Da dove viene|Lo spartito mostra l'ultimo codice SUONO che hai fatto partire con ▶: quello dell'editor SUONO del LAB, oppure quello di un riquadro dei TUTORIAL.">spartito · suono</span>
+    <span class="editor-spacer"></span>
+    <label class="score-bars" data-help="Battute|Quante battute mostrare. Un ciclo di Strudel è una battuta. Con AUTO lo spartito si ferma quando il pattern comincia a ripetersi: &quot;&lt;c4 e4&gt; g4&quot; ne occupa due, perché alterna a ogni ciclo.">battute
+      <select id="score-bars">
+        <option value="auto" selected>auto</option>
+        <option value="1">1</option><option value="2">2</option>
+        <option value="4">4</option><option value="8">8</option>
+      </select>
+    </label>
+    <button class="btn btn-mini" id="score-refresh" data-help="Aggiorna spartito|Rilegge il codice e ridisegna lo spartito: quello dell'editor SUONO, o quello del tutorial se l'ultimo ▶ l'hai premuto lì. Succede da solo ogni volta che premi ▶ ESEGUI.">↻ AGGIORNA</button>
+    <button class="btn btn-mini" id="score-close" data-help="Chiudi|Chiude lo spartito.">✕</button>
+  </div>
+  <div id="score-body">
+    <div id="score-msg" class="score-msg"></div>
+    <div id="score-paper" data-help="Spartito|Ogni battuta è un ciclo del pattern. Le note con un'altezza stanno sul pentagramma; i suoni di batteria sul rigo di percussioni, con il nome scritto sopra la prima volta che compaiono. Il numero sopra un gruppo di note (3, 5, 7) indica una terzina, una quintina, una settimina: tante note in parti uguali dove normalmente ce ne starebbero 2 o 4."></div>
+    <div id="score-warn" class="score-warn"></div>
+    <div id="score-legend" class="score-legend"></div>
+    <div id="score-sync" class="score-sync" data-help="Puntatore|Quando il suono che senti è proprio quello scritto su questo spartito, una linea azzurra scorre sulle note a tempo con la musica e accende quelle che stanno suonando. Se cambi il codice senza premere ▶ ESEGUI, o se sta suonando la timeline, il puntatore si nasconde: spartito e musica non coincidono più."></div>
+    <details id="score-abc-wrap" data-help="Notazione ABC|Lo stesso spartito scritto come testo, nel formato ABC: C D E sono le note, il numero è la durata in semicrome, z è una pausa, | è la stanghetta. È un altro modo ancora di scrivere la musica con le lettere — come fa Strudel.">
+      <summary>notazione ABC (testo)</summary>
+      <pre id="score-abc"></pre>
+    </details>
+  </div>
+</aside>
+
+<aside id="examples-drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <span class="label-txt">libreria esempi</span>
+    <span class="editor-spacer"></span>
+    <button class="btn btn-mini" id="examples-close" data-help="Chiudi|Chiude la libreria degli esempi.">✕</button>
+  </div>
+  <div class="drawer-tabs">
+    <button class="btn btn-mini engine-tab active-visual" data-engine="hydra"
+      data-help="Esempi visuali|Mostra gli esempi per Hydra: immagini, forme, colori e deformazioni.">VISUALE</button>
+    <button class="btn btn-mini engine-tab" data-engine="strudel"
+      data-help="Esempi sonori|Mostra gli esempi per Strudel: note, ritmi, melodie e strutture musicali.">SUONO</button>
+  </div>
+  <div id="examples-tags"
+    data-help="Etichette|Raggruppano gli esempi per argomento. Accendendone più di una restano solo gli esempi che le hanno tutte; il numero dice quanti ne resterebbero."></div>
+  <div id="examples-list"></div>
+</aside>
+
+<!-- ── Drawer SUONI (libreria dei campioni) ─────────────────────────────── -->
+<!-- Etichette e riquadri li scrive js/library.js da samples/strudel.json. -->
+<aside id="library-drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <span class="label-txt">libreria suoni</span>
+    <span id="library-count" class="lib-count"></span>
+    <span class="editor-spacer"></span>
+    <button class="btn btn-mini" id="library-close" data-help="Chiudi|Chiude la libreria dei suoni.">✕</button>
+  </div>
+  <div id="library-tags"
+    data-help="Etichette|Filtrano i suoni per tipo. Accendendone più di una restano solo i suoni che le hanno tutte; il numero dice quanti ne resterebbero."></div>
+  <div id="library-list"></div>
+</aside>
+
+<!-- ── Drawer ASSISTENTE (Ollama) ───────────────────────────────────────── -->
+<aside id="ai-drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <span class="label-txt">assistente ai</span>
+    <span id="ai-status-dot" title="stato di Ollama"
+      data-help="Stato Ollama|Verde: Ollama è attivo su questo computer e l'assistente funziona. Rosso: apri l'app Ollama o esegui 'ollama serve' nel terminale."></span>
+    <span class="editor-spacer"></span>
+    <select id="ai-model" class="field"
+      data-help="Modello|Il modello di linguaggio da usare, tra quelli installati con Ollama. I modelli più grandi rispondono meglio ma più lentamente."></select>
+    <button class="btn btn-mini" id="ai-close" data-help="Chiudi|Chiude l'assistente AI.">✕</button>
+  </div>
+  <div id="ai-messages"
+    data-help="Conversazione|Le risposte dell'assistente compaiono qui. Sui blocchi di codice trovi due bottoni: PROVA lo esegue subito, INSERISCI lo copia nell'editor."></div>
+  <div id="ai-chips">
+    <button class="ai-chip" data-prompt="Crea un semplice esempio visuale con Hydra: qualcosa di colorato e in movimento. Spiega ogni riga."
+      data-help="Idea rapida|Chiede all'assistente un esempio visuale Hydra già pronto, con la spiegazione riga per riga.">✦ esempio visuale</button>
+    <button class="ai-chip" data-prompt="Crea un semplice pattern ritmico con Strudel usando cassa, rullante e charleston. Spiega la sintassi."
+      data-help="Idea rapida|Chiede all'assistente un ritmo Strudel già pronto, con la spiegazione della sintassi.">♪ esempio ritmo</button>
+    <button class="ai-chip" data-prompt="__EXPLAIN__"
+      data-help="Spiega il mio codice|Prima VERIFICA il codice dell'editor attivo: se funziona, l'assistente lo spiega riga per riga; se contiene un errore, ti spiega dove sta il problema e come correggerlo.">? spiega il mio codice</button>
+  </div>
+  <div id="ai-inputrow">
+    <textarea id="ai-input" class="field" rows="2" placeholder="Chiedi un esempio, una variazione, una spiegazione…"
+      data-help="La tua domanda|Scrivi qui cosa vuoi: 'crea un caleidoscopio verde', 'rendi questo ritmo più veloce', 'perché non funziona?'. Invio per mandare."></textarea>
+    <button id="ai-send" class="btn"
+      data-help="Invia|Manda la domanda all'assistente. Mentre risponde diventa FERMA, per interrompere una risposta troppo lunga.">INVIA</button>
+  </div>
+</aside>
+
+<!-- ── Console errori ───────────────────────────────────────────────────── -->
+<div id="console-panel"
+  data-help="Console|Il diario di bordo dell'app: registra ogni esecuzione e soprattutto SPIEGA gli errori in italiano. Si apre da sola quando qualcosa va storto.">
+  <div id="console-bar">
+    <span class="label-txt">console</span>
+    <span id="console-badge" hidden
+      data-help="Errori|Quanti errori sono arrivati da quando la console è chiusa.">0</span>
+    <span id="console-last" class="c-last">pronta — qui compaiono esecuzioni ed errori spiegati</span>
+    <span class="editor-spacer"></span>
+    <!-- Obbligo AGPL: Strudel e hydra-synth impongono di offrire il
+         sorgente quando l'app è pubblicata in rete. Sta qui, in piccolo,
+         per non occupare la barra in alto. -->
+    <a id="source-link" href="#" target="_blank" rel="noopener"
+      data-help="Codice sorgente|Open Live Lab è costruito su Strudel e Hydra, che sono software libero (AGPL): il codice di questa app è pubblico e puoi leggerlo.">sorgente</a>
+    <button id="console-clear" class="btn btn-mini"
+      data-help="Pulisci|Svuota la console: utile per ripartire da zero prima di un nuovo tentativo.">PULISCI</button>
+    <button id="console-close" class="btn btn-mini"
+      data-help="Chiudi|Riduce la console alla sola barra: si riaprirà da sola al prossimo errore.">▾</button>
+  </div>
+  <div id="console-rows"
+    data-help="Messaggi|Ogni riga: ora, da dove arriva (VISUALE, SUONO, TIMELINE…), il messaggio e — per gli errori — una spiegazione con la freccia →. Gli errori ripetuti si accorpano con ×N."></div>
+</div>
+
+<!-- ── Banner modalità aiuto ────────────────────────────────────────────── -->
+<div id="help-banner" hidden>
+  <span>MODALITÀ AIUTO ATTIVA — passa il mouse sugli elementi · seleziona una funzione nel codice per scoprire cosa fa · ESC per uscire</span>
+</div>
+
+<!-- ── Tooltip aiuto ────────────────────────────────────────────────────── -->
+<div id="help-tip" hidden>
+  <div id="help-tip-title"></div>
+  <div id="help-tip-body"></div>
+</div>
+
+<!-- ── Modale modifica clip ─────────────────────────────────────────────── -->
+<div id="clip-modal-back" hidden>
+  <div id="clip-modal" class="modal">
+    <div class="drawer-head">
+      <span class="engine-dot" id="clip-modal-dot"></span>
+      <span class="label-txt" id="clip-modal-engine">clip</span>
+      <span class="editor-spacer"></span>
+      <button class="btn btn-mini" id="clip-modal-close" data-help="Chiudi|Chiude la finestra salvando le modifiche alla clip.">✕</button>
+    </div>
+    <input type="text" id="clip-modal-label" class="field" placeholder="nome della clip"
+      data-help="Nome clip|Il nome che compare sul blocco nella timeline: scegli qualcosa che ti aiuti a ricordare cosa fa.">
+    <div id="clip-variants-row"
+      data-help="Varianti|Una clip può contenere più versioni alternative del suo codice. Quando la linea del tempo la raggiunge, ne viene scelta una: a caso 🎲 o in sequenza 🔁.">
+      <span class="label-txt">varianti</span>
+      <div id="clip-variant-tabs"></div>
+      <button class="btn btn-mini" id="clip-variant-add"
+        data-help="Nuova variante|Aggiunge una variante: parte da una copia del codice attuale, poi modificala. A ogni passaggio della timeline la clip ne sceglierà una.">+ VARIANTE</button>
+      <button class="btn btn-mini" id="clip-variant-del" hidden
+        data-help="Elimina variante|Cancella la variante mostrata in questo momento.">🗑</button>
+      <span class="editor-spacer"></span>
+      <select id="clip-variant-mode" class="field" hidden
+        data-help="Come scegliere|🎲 una a caso: a ogni passaggio la clip pesca una variante a sorte. 🔁 in sequenza: le varianti si alternano in ordine, un passaggio ciascuna.">
+        <option value="random">🎲 una a caso</option>
+        <option value="ciclo">🔁 in sequenza</option>
+      </select>
+    </div>
+    <div id="cm-clip" data-help="Codice della clip|Il codice che verrà eseguito quando la performance raggiunge questa clip. Modificalo e premi PROVA per sentire/vedere subito il risultato."></div>
+    <div id="clip-vars"
+      data-help="Variabili|Numeri che cambiano nel tempo mentre la clip suona. Ognuna ha un nome e un range (da… a…); il suo inviluppo, nella corsia sotto la traccia, dice quanto vale istante per istante. Nel codice si scrive il nome al posto di un numero.">
+      <div id="clip-vars-head">
+        <span class="label-txt">variabili</span>
+        <span id="clip-vars-hint" class="label-txt"></span>
+        <span class="editor-spacer"></span>
+        <button class="btn btn-mini" id="clip-var-add"
+          data-help="Nuova variabile|Aggiunge una variabile alla clip: dagli un nome, scegli da quanto a quanto può andare, poi usala nel codice. Chiusa la finestra, disegna il suo inviluppo nella corsia sotto la traccia.">+ VARIABILE</button>
+      </div>
+      <div id="clip-vars-list"></div>
+      <div id="clip-vars-err" hidden></div>
+    </div>
+    <div class="modal-btnrow">
+      <button class="btn" id="clip-modal-try"
+        data-help="Prova|Esegue subito il codice della clip, senza aspettare la timeline: così controlli che funzioni.">▶ PROVA</button>
+      <button class="btn" id="clip-modal-stop"
+        data-help="Ferma prova|Ferma l'esecuzione di prova.">■ FERMA</button>
+      <span class="editor-spacer"></span>
+      <button class="btn" id="clip-modal-delete"
+        data-help="Elimina|Cancella questa clip dalla timeline. Puoi annullare con Cmd+Z.">🗑 ELIMINA</button>
+      <button class="btn active-accent" id="clip-modal-ok"
+        data-help="Fatto|Salva le modifiche e chiude la finestra.">FATTO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Vendor ───────────────────────────────────────────────────────────── -->
+<script src="vendor/codemirror.min.js"></script>
+<script src="vendor/cm-javascript.min.js"></script>
+<script src="vendor/cm-closebrackets.min.js"></script>
+<script src="vendor/cm-matchbrackets.min.js"></script>
+<script src="vendor/cm-comment.min.js"></script>
+<script src="vendor/hydra-synth.js"></script>
+<script src="vendor/strudel-web.js"></script>
+
+<!-- ── App ──────────────────────────────────────────────────────────────── -->
+<!-- config.js per primo: engines.js legge la configurazione mentre viene
+     valutato (initStrudel parte al parsing, non su DOMContentLoaded). -->
+<script src="js/config.js"></script>
+<script src="js/funcdocs.js"></script>
+<script src="js/snippets.js"></script>
+<script src="js/snippets/visuale-guide.js"></script>
+<script src="js/tutorials.js"></script>
+<script src="js/tutorials/idm.js"></script>
+<script src="js/tutorials/acid.js"></script>
+<script src="js/tutorials/sax.js"></script>
+<script src="js/tutorials/visuale.js"></script>
+<script src="js/tutorials/visuale-guide.js"></script>
+<!-- Dopo i dati e prima dei moduli: in inglese e spagnolo sostituisce
+     tutorial ed esempi con la traduzione e traduce il testo di questa pagina. -->
+<script>I18N.apply();</script>
+<script src="js/console.js"></script>
+<script src="js/instruments.js"></script>
+<script src="js/engines.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/highlight.js"></script>
+<script src="js/help.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/assistant.js"></script>
+<script src="js/score.js"></script>
+<script src="js/scoreview.js"></script>
+<script src="js/library.js"></script>
+<script src="js/board.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Open Live Lab THEME — i temi dell'app (dark instrument UI)
+
+   Un tema è UN BLOCCO DI VARIABILI: colori, font, raggio degli angoli.
+   Tutto il resto (glow, striscia spectrum, fondi traslucidi, colori delle
+   clip) è calcolato da quelle variabili più sotto e in app.css — quindi per
+   cambiare l'aspetto basta toccare i valori di un blocco, niente altro.
+
+   Il selettore è [data-theme="…"] senza :root apposta: vale su <html> (il
+   tema attivo) e anche sulle voci del menu ◐ TEMA, che così mostrano
+   l'anteprima di ciascun tema con i suoi colori veri.
+
+   Per AGGIUNGERE un tema:
+     1. copia uno dei blocchi qui sotto e cambia il nome in [data-theme="…"];
+     2. aggiungi una riga con lo stesso nome all'elenco in js/theme.js;
+     3. se usi font nuovi, aggiungili all'@import qui sotto.
+   Per cambiare il tema con cui l'app si apre: DEFAULT in js/theme.js.
+
+   Regola che vale per tutti i temi: caldo = VISUALE (Hydra), freddo = SUONO
+   (Strudel). Il legame colore↔motore è l'unica cosa da non rompere.
+
+   Online: font da Google Fonts (il browser scarica solo quelli del tema in
+   uso). Offline: fallback di sistema, in modo trasparente.
+   ════════════════════════════════════════════════════════════════════════ */
+
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Lexend:wght@400;600;700&family=Red+Hat+Text:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600&display=swap");
+
+/* ╔══ TEMA «NOTTE» — blu notte, corallo e azzurro (predefinito) ══════════ */
+:root,
+[data-theme="notte"] {
+  /* fondali, dal più profondo al più rialzato */
+  --void:    #04060A;   /* full-bleed, fondo dei blocchi di codice */
+  --bg:      #080B11;   /* superficie di base */
+  --panel:   #0C1018;   /* toolbar, barre, pannelli */
+  --card:    #121722;   /* corpo card / controllo */
+  --elev:    #19202D;   /* elevato / hover */
+
+  /* hairline */
+  --line:       #1B2230;
+  --line-2:     #283245;
+  --line-hover: #46536B;
+  --grid:       #131925;
+
+  /* inchiostro, dal più forte al più tenue */
+  --ink:     #F4F7FB;
+  --ink-2:   #AEB8C8;
+  --ink-3:   #7E899B;
+  --label:   #6B778C;
+  --ghost:   #2E3748;
+
+  /* accenti */
+  --visual:  #F2856D;   /* caldo · VISUALE / Hydra */
+  --sound:   #5EB4F2;   /* freddo · SUONO / Strudel */
+  --accent:  #E9BC5D;   /* evidenza: vista attiva, cursore, playhead, valori */
+  --track-2: #8C9CF5;   /* tracce SUONO 2…8 della timeline: tinte lontane */
+  --track-3: #6FD39A;   /* da --visual e --accent, e diverse fra vicine */
+  --track-4: #B892F0;
+  --track-5: #4FD6D0;
+  --track-6: #E88BC4;
+  --track-7: #B6D36A;
+  --track-8: #A3B1C6;
+
+  /* semaforo */
+  --ok:   #5CC98A;
+  --warn: #E0A84A;
+  --bad:  #E0566A;
+
+  /* tipografia */
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-ui:      'Figtree', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* forma */
+  --radius: 3px;
+}
+
+/* ╔══ TEMA «BRACE» — nero caldo, arancio e verde acqua, spigoli vivi ═════ */
+[data-theme="brace"] {
+  --void:    #000000;
+  --bg:      #0C0A09;
+  --panel:   #110E0C;
+  --card:    #181412;
+  --elev:    #201B18;
+
+  --line:       #231D1A;
+  --line-2:     #322A25;
+  --line-hover: #54473F;
+  --grid:       #1A1613;
+
+  --ink:     #FFF8F0;
+  --ink-2:   #C2B5A8;
+  --ink-3:   #90847A;
+  --label:   #786C62;
+  --ghost:   #3A322D;
+
+  --visual:  #EC7A3C;
+  --sound:   #56C4B2;
+  --accent:  #E3C067;
+  --track-2: #6FA8DC;
+  --track-3: #A6C96A;
+  --track-4: #B08CDB;
+  --track-5: #62D0E6;
+  --track-6: #E08AAE;
+  --track-7: #7FD98F;
+  --track-8: #A8ADB8;
+
+  --ok:   #7CC46A;
+  --warn: #E3A84F;
+  --bad:  #D9534A;
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-ui:      'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono:    'Spline Sans Mono', 'Courier New', monospace;
+
+  --radius: 0px;
+}
+
+/* ╔══ TEMA «AURORA» — viola profondo, rosa e menta, angoli morbidi ═══════ */
+[data-theme="aurora"] {
+  --void:    #050409;
+  --bg:      #0B0912;
+  --panel:   #100D1A;
+  --card:    #171326;
+  --elev:    #1F1A33;
+
+  --line:       #221C36;
+  --line-2:     #31294D;
+  --line-hover: #52467A;
+  --grid:       #18132A;
+
+  --ink:     #F8F5FF;
+  --ink-2:   #B9B2CF;
+  --ink-3:   #8982A3;
+  --label:   #736C8E;
+  --ghost:   #372F52;
+
+  --visual:  #F07AA8;
+  --sound:   #5FD6C4;
+  --accent:  #B79CFA;
+  --track-2: #6CB6F5;
+  --track-3: #C3E07A;
+  --track-4: #F0A868;
+  --track-5: #8F9CF8;
+  --track-6: #E8D86A;
+  --track-7: #7EE0A6;
+  --track-8: #B4AFC8;
+
+  --ok:   #6FD39A;
+  --warn: #EFC062;
+  --bad:  #F0607A;
+
+  --font-display: 'Lexend', system-ui, sans-serif;
+  --font-ui:      'Red Hat Text', system-ui, sans-serif;
+  --font-mono:    'Red Hat Mono', 'Courier New', monospace;
+
+  --radius: 6px;
+}
+
+/* ── Valori calcolati dal tema (non serve toccarli) ──────────────────── */
+:root {
+  /* striscia spectrum — firma: caldo → evidenza → freddo */
+  --spectrum: linear-gradient(90deg, var(--visual) 0%, var(--accent) 50%, var(--sound) 100%);
+
+  /* glow (profondità = luce, mai ombra) */
+  --glow-visual: 0 0 14px color-mix(in srgb, var(--visual) 35%, transparent);
+  --glow-sound:  0 0 14px color-mix(in srgb, var(--sound)  35%, transparent);
+  --glow-accent: 0 0 14px color-mix(in srgb, var(--accent) 35%, transparent);
+  --glow-ok:     0 0 14px color-mix(in srgb, var(--ok)     35%, transparent);
+
+  /* codice colore dei linguaggi (Hydra e Strudel): uguale in tutti i temi,
+     apposta. Gli altri colori del codice sono quelli di CodeMirror (vedi
+     app.css). */
+  --code-text:     #FFFFFF;
+  --code-operator: #B8B0A8;
+  --code-property: #4FB8C4;
+
+  /* spaziatura (griglia 8px) */
+  --s1: 8px;  --s2: 16px; --s3: 24px; --s4: 32px; --s5: 48px;
+  --half: 4px;
+
+  /* movimento (calmo, ease-out) */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur:  0.22s;
+}
+
+/* ── Striscia spectrum (firma, 2px) ──────────────────────────────────── */
+.spectrum { height: 2px; background: var(--spectrum); flex-shrink: 0; }
+
+/* ── Label mono (MAIUSCOLO, tracking ampio) ──────────────────────────── */
+.label-txt {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--label);
+}
+
+/* ── Bottone ghost (hover schiarisce → attivo bordo+glow, mai fill) ──── */
+.btn {
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  color: var(--label);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease);
+}
+.btn:hover  { color: var(--ink-2); border-color: var(--line-hover); }
+.btn:active {
+  color: color-mix(in srgb, var(--visual) 80%, black);
+  border-color: color-mix(in srgb, var(--visual) 80%, black);
+}
+.btn.active {
+  color: var(--sound);
+  border-color: var(--sound);
+  box-shadow: var(--glow-sound);
+}
+.btn.active-visual {
+  color: var(--visual);
+  border-color: var(--visual);
+  box-shadow: var(--glow-visual);
+}
+.btn.active-accent {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--glow-accent);
+}
+.btn.active-ok {
+  color: var(--ok);
+  border-color: var(--ok);
+  box-shadow: var(--glow-ok);
+}
+.btn:disabled { color: var(--ghost); border-color: var(--line); cursor: default; box-shadow: none; }
+
+/* ── Card piatta (hairline) ──────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* ── Campi / select / textarea ───────────────────────────────────────── */
+.field {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  outline: none;
+  transition: border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease);
+}
+.field:focus { border-color: var(--sound); box-shadow: var(--glow-sound); }
+
+/* ── Slider ──────────────────────────────────────────────────────────── */
+.slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 2px; border-radius: 1px;
+  background: var(--line-2); outline: none; cursor: pointer;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+  box-shadow: var(--glow-accent);
+}
+.slider::-moz-range-thumb {
+  width: 12px; height: 12px; border: none; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+}
+
+/* ── Modale (glow al posto dell'ombra, bordo in evidenza) ────────────── */
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--glow-accent);
+  font-family: var(--font-mono);
+  color: var(--ink-2);
+}
+
+/* ── Titolo strumento ────────────────────────────────────────────────── */
+.title {
+  font-family: var(--font-display);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── Scrollbar sottili ───────────────────────────────────────────────── */
+* { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: var(--radius); }
+*::-webkit-scrollbar-thumb:hover { background: var(--line-hover); }
