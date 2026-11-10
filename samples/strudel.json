@@ -1,0 +1,133 @@
+{
+ "bd": [
+  "bd/BT0A0A7.wav",
+  "bd/BT0A0D0.wav",
+  "bd/BT0A0D3.wav"
+ ],
+ "sd": [
+  "sd/rytm-00-hard.wav",
+  "sd/rytm-01-classic.wav"
+ ],
+ "sn": [
+  "sn/ST0T0S0.wav",
+  "sn/ST0T0S3.wav"
+ ],
+ "hh": [
+  "hh/000_hh3closedhh.wav",
+  "hh/001_hh3crash.wav",
+  "hh/002_hh3hit1.wav",
+  "hh/003_hh3hit2.wav"
+ ],
+ "cp": [
+  "cp/HANDCLP0.wav",
+  "cp/HANDCLPA.wav"
+ ],
+ "lt": [
+  "lt/LT0D0.wav"
+ ],
+ "mt": [
+  "mt/MT0D0.wav"
+ ],
+ "ht": [
+  "ht/HT0D0.wav"
+ ],
+ "perc": [
+  "perc/000_perc0.wav",
+  "perc/001_perc1.wav",
+  "perc/002_perc2.wav"
+ ],
+ "casio": [
+  "casio/high.wav",
+  "casio/low.wav",
+  "casio/noise.wav"
+ ],
+ "jazz": [
+  "jazz/000_BD.wav",
+  "jazz/001_CB.wav",
+  "jazz/002_FX.wav",
+  "jazz/003_HH.wav"
+ ],
+ "arpy": [
+  "arpy/arpy01.wav",
+  "arpy/arpy02.wav",
+  "arpy/arpy03.wav",
+  "arpy/arpy04.wav"
+ ],
+ "tabla": [
+  "tabla/000_bass_flick1.wav",
+  "tabla/001_bass_flick2.wav",
+  "tabla/002_bass_lick1.wav"
+ ],
+ "east": [
+  "east/000_nipon_wood_block.wav",
+  "east/001_ohkawa_mute.wav",
+  "east/002_ohkawa_open.wav"
+ ],
+ "space": [
+  "space/000_0.wav",
+  "space/001_1.wav"
+ ],
+ "crow": [
+  "crow/000_crow.wav"
+ ],
+ "xbreak1": [
+  "xbreak1/001.wav",
+  "xbreak1/002.wav",
+  "xbreak1/003.wav",
+  "xbreak1/004.wav",
+  "xbreak1/005.wav",
+  "xbreak1/006.wav",
+  "xbreak1/007.wav",
+  "xbreak1/008.wav",
+  "xbreak1/009.wav",
+  "xbreak1/010.wav",
+  "xbreak1/011.wav",
+  "xbreak1/012.wav",
+  "xbreak1/013.wav",
+  "xbreak1/014.wav",
+  "xbreak1/015.wav",
+  "xbreak1/016.wav"
+ ],
+ "dnb1": [
+  "dnb1/001.wav",
+  "dnb1/002.wav",
+  "dnb1/003.wav",
+  "dnb1/004.wav",
+  "dnb1/005.wav",
+  "dnb1/006.wav",
+  "dnb1/007.wav",
+  "dnb1/008.wav",
+  "dnb1/009.wav",
+  "dnb1/010.wav",
+  "dnb1/011.wav",
+  "dnb1/012.wav",
+  "dnb1/013.wav",
+  "dnb1/014.wav",
+  "dnb1/015.wav",
+  "dnb1/016.wav"
+ ],
+ "sax": [
+  "sax/000_notes121a.wav",
+  "sax/001_notes121a2.wav",
+  "sax/002_notes121b.wav",
+  "sax/003_notes121bflat.wav",
+  "sax/004_notes121bflat2.wav",
+  "sax/005_notes121c.wav",
+  "sax/006_notes121c2.wav",
+  "sax/007_notes121csharp.wav",
+  "sax/008_notes121csharp2.wav",
+  "sax/009_notes121d.wav",
+  "sax/010_notes121e.wav",
+  "sax/011_notes121e2.wav",
+  "sax/012_notes121eflat.wav",
+  "sax/013_notes121eflat2.wav",
+  "sax/014_notes121f.wav",
+  "sax/015_notes121f2.wav",
+  "sax/016_notes121fsharp.wav",
+  "sax/017_notes121fsharp2.wav",
+  "sax/018_notes121g.wav",
+  "sax/019_notes121g2.wav",
+  "sax/020_notes121gsharp.wav",
+  "sax/021_notes121gsharp2.wav"
+ ]
+}
