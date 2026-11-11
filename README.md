@@ -94,18 +94,6 @@ ollama pull gemma3:12b
 
 Senza Ollama tutto il resto funziona normalmente.
 
-## Metterlo online per la propria classe
-
-```bash
-./build.sh          # produce livelab.zip
-```
-
-Lo zip contiene la cartella `livelab/`: va estratto nella radice di un sito
-con **HTTPS** (senza, il browser non fa partire l'audio). Per la lavagna serve
-PHP 7.2 o successivo, e una password docente: si crea `api/secret.php` sul
-server partendo da `api/secret.example.php`. Il docente apre l'app con
-`?docente=1` in fondo all'indirizzo per avere i comandi della lavagna.
-
 ## Scorciatoie
 
 | Dove | Tasti | Azione |
